@@ -93,3 +93,81 @@ fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_temperature_thresholds() {
+        let on_temp_c = 60.0;
+        let off_temp_c = 45.0;
+        let on_temp_mc = (on_temp_c * 1000.0) as i32;
+        let off_temp_mc = (off_temp_c * 1000.0) as i32;
+
+        assert_eq!(on_temp_mc, 60000);
+        assert_eq!(off_temp_mc, 45000);
+    }
+
+    #[test]
+    fn test_cli_parsing_defaults() {
+        let args = Args::parse_from(["test", "--offset", "0"]);
+        assert_eq!(args.chip, "/dev/gpiochip0");
+        assert_eq!(args.offset, 0);
+        assert_eq!(args.on_temp, 60.0);
+        assert_eq!(args.off_temp, 45.0);
+        assert_eq!(args.interval, 2000);
+    }
+
+    #[test]
+    fn test_cli_parsing_custom_values() {
+        let args = Args::parse_from([
+            "test",
+            "--chip",
+            "/dev/gpiochip1",
+            "--offset",
+            "50",
+            "--on-temp",
+            "70",
+            "--off-temp",
+            "50",
+            "--interval",
+            "1000",
+        ]);
+
+        assert_eq!(args.chip, "/dev/gpiochip1");
+        assert_eq!(args.offset, 50);
+        assert_eq!(args.on_temp, 70.0);
+        assert_eq!(args.off_temp, 50.0);
+        assert_eq!(args.interval, 1000);
+    }
+
+    #[test]
+    fn test_read_temp_mock() {
+        // Simulate a temp string as if read from /sys/class/thermal/thermal_zone0/temp
+        let input = "55000\n";
+        let temp: i32 = input.trim().parse().unwrap();
+        assert_eq!(temp, 55000);
+    }
+
+    #[test]
+    fn test_fan_logic() {
+        let mut fan_on = false;
+        let on_temp = 60000;
+        let off_temp = 45000;
+
+        // Temp rises
+        let temp = 61000;
+        if !fan_on && temp >= on_temp {
+            fan_on = true;
+        }
+        assert!(fan_on);
+
+        // Temp drops
+        let temp = 44000;
+        if fan_on && temp <= off_temp {
+            fan_on = false;
+        }
+        assert!(!fan_on);
+    }
+}
+
