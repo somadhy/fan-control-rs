@@ -1,0 +1,25 @@
+[Unit]
+Description=Fan Control Service for GPIO
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/fan-control-rs \
+  --chip /dev/gpiochip0 \
+  --offset 50 \
+  --on-temp 60 \
+  --off-temp 45 \
+  --interval 2000 \
+  --verbose
+Restart=always
+RestartSec=5
+
+# Optional: give access to GPIO devices
+AmbientCapabilities=CAP_SYS_RAWIO
+ProtectSystem=full
+ProtectHome=yes
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target
+
