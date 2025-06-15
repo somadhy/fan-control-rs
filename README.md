@@ -1,4 +1,4 @@
-# CPU Fan control on rust (fan-control-rs)
+# CPU Fan control in rust (fan-control-rs)
 CPU fan control util with GPIO with RUST
 
 ## 🛠 Setup Steps
